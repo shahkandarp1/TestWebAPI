@@ -7,18 +7,27 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var allowedOrigin = Environment.GetEnvironmentVariable("AllowedOrigin")
-                    ?? builder.Configuration["AllowedOrigin"];
+var allowedOrigin = builder.Environment.IsProduction()
+    ? Environment.GetEnvironmentVariable("AllowedOrigin")
+    : builder.Configuration["AllowedOrigin"];
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins(allowedOrigin)
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        if (!string.IsNullOrWhiteSpace(allowedOrigin))
+        {
+            policy.WithOrigins(allowedOrigin)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        else
+        {
+            throw new InvalidOperationException("AllowedOrigin is not configured properly.");
+        }
     });
 });
+
 
 var app = builder.Build();
 
